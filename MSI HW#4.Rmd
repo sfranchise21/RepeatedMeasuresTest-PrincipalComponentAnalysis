@@ -1,0 +1,278 @@
+---
+title: 'Multivariate Statistical Inference Homework #4'
+author: "Steven Francis"
+date: "March 21, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1
+
+```{r, echo=TRUE}
+number.parity.data <- read.csv("Number_Parity.csv", header = T)
+```
+
+# Part a)
+
+```{r, echo=TRUE}
+library('car')
+qqPlot(number.parity.data$WordDiff)
+qqPlot(number.parity.data$WordSame)
+qqPlot(number.parity.data$Num_Diff)
+qqPlot(number.parity.data$Num_Same)
+
+
+shapiro.test(number.parity.data$WordDiff)
+shapiro.test(number.parity.data$WordSame)
+shapiro.test(number.parity.data$Num_Diff)
+shapiro.test(number.parity.data$Num_Same)
+```
+By looking at the Q-Q plots, it is apparent that treating this data as a random sample from a multivariate normal distribution is reasonable. All three plots show the data points hover around the "normality line" and are within the "normality boundaries" but could be better. This is also confirmed by the Shapiro-Wilk tests of normality for the various data columns as all p-values (when rounded) are or above 0.05.
+
+# Part b)
+
+```{r, echo=TRUE}
+C1 <- array(data = c(-1, -1, -1, 1, -1, 1, -1, 1, 1, 1, 1, -1), 
+                         dim = c(3,4))
+
+x.bar1 <- colMeans(number.parity.data)
+
+S1 <- cov(number.parity.data)
+
+#Now calculating the T^2 statistic with 
+n1 = 32 
+p1 = 4
+C1.xbar1 <- as.vector(C1 %*% x.bar1)
+C1.xbar1
+
+T2.1 <- n1 * sum(C1.xbar1 * solve(C1 %*% S1 %*% t(C1), C1.xbar1))
+T2.1
+
+#To obtain a p-value from Hotelling's T^2 distribution 
+1 - pf((n1-p1+1)/((n1-1)*(p1-1))*T2.1, df1 = p1-1, df2 = n1-p1+1)
+```
+The p-value obtained is essentially zero meaning that the word format/Arabic numeral and parity have some treatment effect on reaction time
+
+# Part c)
+
+```{r, echo=TRUE}
+b1.1 <- C1[1,]
+b2.1 <- C1[2,]
+b3.1 <- C1[3,]
+
+q1 <- 3
+alpha <- 0.05
+
+
+t.mult1 <- qt(1-alpha/(2*q1), df = n1-1)
+sum(b1.1*x.bar1) + c(-1,1) * t.mult1 * sqrt(sum(b1.1*S1 %*% b1.1)/n1)
+sum(b2.1*x.bar1) + c(-1,1) * t.mult1 * sqrt(sum(b2.1*S1 %*% b2.1)/n1)
+sum(b3.1*x.bar1) + c(-1,1) * t.mult1 * sqrt(sum(b3.1*S1 %*% b3.1)/n1)
+```
+It appears that both main effects (same parity vs. different parity) and (word format vs. Arabic numeral) are statistically significant sense the intervals do not contain 0. Also, the same parity vs, different parity is of higher magnitude.
+
+The interval for the interaction contrast contains zero, therefore there is no evidence of difference in parity effect for word format versus parity effect given Arabic digits.
+
+# Problem 2a
+
+```{r, echo=TRUE}
+turtles <- read.csv("Turtles.csv", header = T)
+
+female_turtles <- turtles[1:24,]
+male_turtles <- turtles[25:48,]
+
+n2.1 <- nrow(female_turtles)
+n2.2 <- nrow(male_turtles)
+p2 <- ncol(male_turtles)
+
+x.bar2.1 <- colMeans(female_turtles[, 1:3])
+x.bar2.2 <- colMeans(male_turtles[, 1:3])
+
+S2.1 <- cov(female_turtles[,1:3])
+S2.2 <- cov(male_turtles[, 1:3])
+
+S2 <- 1/(n2.1 + n2.2 - 2) * ((n2.1 - 1)*S2.1 + (n2.2 - 1)*S2.2)
+
+T2.2 <- 1/(1/n2.1 + 1/n2.2) * sum((x.bar2.1 - x.bar2.2) * 
+                                    solve(S2, x.bar2.1 - x.bar2.2))
+T2.2
+
+# To obtain the p-value
+1 - pf((n2.1 + n2.2 - p2 - 1)/((n2.1 + n2.2 - 2)* p2) * T2.2, 
+     df1 = p2, df2 = n2.1 + n2.2- p2 -1)
+```
+Since the p-value is close to zero, the data indicates that the mean vectors are different.
+
+# Problem 2b
+
+```{r,echo=TRUE}
+q2 <- 3
+
+mean(female_turtles$x1) + c(-1,1) * qt(1-alpha/(2*q2), df = n2.1 - 1) * 
+  sd(female_turtles$x1)/sqrt(n2.1)
+
+mean(female_turtles$x2) + c(-1,1) * qt(1-alpha/(2*q2), df = n2.1 - 1) *
+  sd(female_turtles$x2)/sqrt(n2.1)
+
+mean(female_turtles$x3) + c(-1,1) * qt(1-alpha/(2*q2), df = n2.1 - 1) * 
+  sd(female_turtles$x3)/sqrt(n2.1)
+```
+```{r, echo=TRUE}
+mean(male_turtles$x1) + c(-1,1) * qt(1-alpha/(2*q2), df = n2.2 - 1) * 
+  sd(male_turtles$x1)/sqrt(n2.2)
+
+mean(male_turtles$x2) + c(-1,1) * qt(1-alpha/(2*q2), df = n2.2 - 1) * 
+  sd(male_turtles$x2)/sqrt(n2.2)
+
+mean(male_turtles$x3) + c(-1,1) * qt(1-alpha/(2*q2), df = n2.2 - 1) * 
+  sd(male_turtles$x3)/sqrt(n2.2)
+
+```
+
+# Problem 3a
+
+```{r, echo=TRUE}
+track_records <- read.csv("Track_Records.csv", header = T)
+
+R3.1 <- cor(track_records[,2:8])
+R3.1
+
+ev3.1 <- eigen(R3.1)
+evalues <- ev3.1$values
+evectors<- ev3.1$vectors
+
+evalues
+evectors
+```
+
+# Problem 3b
+
+```{r,echo=TRUE}
+#Places eigenvalues in a diagonal matrix
+L <- round(diag(evalues),6)
+
+#Proportion of variance explained by lambda1,...,lambda7
+diag(L)/sum(diag(L))
+
+#Screeplot of variance
+plot(diag(L)/sum(diag(L)), type = "b", 
+     main = "Scree Plot for Track Record Data")
+
+#Cumulative proportion of variance explained by lambda1,...,lambda7
+cumsum(diag(L))/sum(diag(L))
+```
+According to the results obtained from the cumulative proportion of explained variance, we would only need to include 2 NPC's to account for 90% of the total standarized variance explained.
+
+# Problem 3c
+The interpretation of the first NPC seems to be an average of the data since there are no major differences between magnitude or sign. The second NPC appears to have large negative associations with the 100 meter, 200 meter and 400 meter events, so this primarily measures significance of the shorter distances over the longer distances ran by women from their respective countries.
+
+# Problem 3d
+
+```{r, echo=TRUE}
+x.bar3.1 <- colMeans(track_records[,2:8])
+ones <- rep(1, 54)
+X <- as.matrix(track_records[,2:8])
+
+rownames(X) <- track_records$Country
+S <- cov(X)
+D.5 <- diag(1/sqrt(diag(S)))
+
+
+X.S <- (X - ones%*%t(x.bar3.1))%*%D.5
+
+Z <- X.S %*% evectors
+Z
+
+sort(Z[,1], decreasing = T)
+```
+No, this ranking does not exactly correspond with my previous notion of athletic excellence for various countries. This is true because even thought that the country with the fastest time (USA - row 54) is ranked number one by the first principal component, I would have figured that the rest of the rankings would have corresponded with the female runners from the countries that have the next fastest time, and so on.
+
+# Problem 3e
+
+```{r, echo=TRUE}
+plot(Z[,1], Z[,2])
+text(-1.455347346, -2.3771213453, labels = "KOR_N", cex = 0.7)
+text(-8.213415123, 2.0282582323, labels = "SAM", cex = 0.7)
+text(-7.906227224, -0.5205487107, labels = "COK", cex = 0.7)
+```
+The things that make these points stand out the way they do is because the female world records for those respective countries are close to being (or are) the slowest for the 100-meter and 200-meter track events.
+
+# Problem 4a
+
+```{r, echo=TRUE}
+X
+
+#Calculation of Speed for various events:
+X[,1] <- 100/X[,1]
+X[,2] <- 200/X[,2]
+X[,3] <- 400/X[,3]
+X[,4] <- 800/(X[,4]*60)
+X[,5] <- 1500/(X[,5]*60)
+X[,6] <- 3000/(X[,6]*60)
+X[,7] <- 42195/(X[,7]*60)
+
+X
+```
+
+# Problem 4b
+
+```{r, echo=TRUE}
+S4.1 <- cov(X)
+
+ev4.1 <- eigen(S4.1)
+new_evalues <- ev4.1$values
+new_evectors<- ev4.1$vectors
+
+
+#Places eigenvalues in a diagonal matrix
+L4.1 <- round(diag(new_evalues),6)
+
+#Proportion of variance explained by lambda1,...,lambda7
+diag(L4.1)/sum(diag(L4.1))
+
+
+#Cumulative proportion of variance explained by lambda1,...,lambda7
+cumsum(diag(L4.1))/sum(diag(L4.1))
+```
+We should retain 2 principal components if our goal is to account for 90% of total sample variance.
+
+# Problem 4c
+
+```{r, echo=TRUE}
+new_evectors
+```
+The interpretation of the first NPC seems to be an average of the data since there are no major differences between magnitude or sign. The second NPC appears to have large negative associations with the 100 meter, 200 meter and 400 meter events, so this primarily measures significance in the speed of runners of the shorter distances over the speed of runners of longer distances ran by women from their respective countries.
+
+These interpretations are very similar to those of the first two NPCs in the previous excerise.
+
+# Problem 4d
+
+```{r, echo=TRUE}
+x.bar4.1 <- colMeans(X)
+D_0.5 <- diag(1/sqrt(diag(S4.1)))
+
+X.S2 <- (X - ones%*%t(x.bar4.1))%*%D_0.5
+
+Z2 <- X.S2 %*% new_evectors
+Z2
+
+sort(Z2[,1], decreasing = F)
+
+```
+Other than the negative signs, there aren't really too many differences from this ranking compared to the ranking from Problem 3. There were a few countries that appeared to leap over others in the speed ranking but the female runners from USA still appears to be the fastest runner and the runners from Samoa still seem to be the slowest.
+
+# Problem 4e
+
+```{r, echo=TRUE}
+plot(Z2[,1], Z2[,2])
+text(1.36618143, 2.395392864, labels = "KOR_N", cex = 0.7)
+text(7.50383487, -0.836719247, labels = "SAM", cex = 0.7)
+text(7.31711331, 0.924204600, labels = "COK", cex = 0.7)
+```
+This plot seems to be the similar to the previous plot but just rotated 180 degrees clockwise. It also appears that, much like the previous plot, runners from North Korea, the Cook Islands and Samoa slow times have also affected their speeds as they seem to be the slowest runners.
+
+
+
